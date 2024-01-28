@@ -1,0 +1,7 @@
+body {
+    background-color: #efefef;
+}
+
+span.done {
+    text-decoration: line-through ;
+}

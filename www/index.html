@@ -8,5 +8,128 @@
     </head>
     <body>
         <h1>Hello world!</h1> 
+        <div style="display:flex">
+            <div>
+                <input type="text" name="task" id="list_root_input" placeholder="Task name">
+                <button onclick="Actions.addTask(this.value,this.attributes.for.value)" value="list_root" for="list_root_input">Add</button>
+                <ul id="list_root">
+                </ul>
+            </div>
+            <div>
+                <input type="text" name="task" id="list_root_input2" placeholder="Task name">
+                <button onclick="Actions.addTask(this.value,this.attributes.for.value)" value="list_root2" for="list_root_input2">Add</button>
+                <ul id="list_root2">
+                </ul>
+            </div>
+        </div>
+
+        <template id="task_li">
+            <li><span>Task template</span><button value="task_list_root_id" list_item_id="list_item_id">delete</button></li>
+        </template>
+
+        <script type="text/javascript" defer>
+            class Task {
+                static lastId = -1
+
+                constructor(name){
+                    this.name = name
+                    this.id = ++Task.lastId
+                    this.done = false
+                }
+            }
+
+            class TaskList {
+                constructor(){
+                    this.tasks = []
+                }
+
+                add(name){
+                    this.tasks.push(new Task(name))
+                }
+
+                remove(id){
+                    this.tasks = this.tasks.filter(task=>task.id!=id) 
+                }
+
+                done(id){
+                    this.tasks.forEach(task=>{
+                        if (task.id == id)
+                            task.done=!task.done
+                    })
+                }
+
+                toString(){
+                    return this.tasks.map(e=>e.id+" - "+e.name).join("\n")
+                }
+
+                print() {
+                    console.log(this.toString())
+                }
+
+            }
+
+            class Renderer {
+                constructor(task_list,root_id){
+                    this.root_id = root_id
+                    this.task_list = task_list
+                    this.root = document.querySelector("#"+this.root_id)
+                }
+
+                update(){
+                    this.root.innerHTML = ""
+                    this.task_list.tasks.map(task=>{
+                        let template = document.querySelector("template#task_li")
+                        let clone = template.content.cloneNode(true)
+                        let sp = clone.querySelector("span")
+                        sp.innerHTML = task.name
+                        if (task.done) {sp.classList.add("done")} else {sp.classList.remove("done")}
+                        sp.onclick = ()=>{Actions.markDone(this.root_id,task.id)}
+                        let btn = clone.querySelector("button")
+                        btn.setAttribute("list_item_id",String(task.id))
+                        btn.onclick = ()=>{Actions.removeTask(this.root_id,task.id)}
+                        this.root.prepend(clone)
+                    })
+                }
+            }
+
+            class Actions {
+                static lists = {}
+
+                static initList(list_root_id){
+                    let list = new TaskList()
+                    let renderer = new Renderer(list,list_root_id)
+                    Actions.lists[list_root_id] = {
+                        list,
+                        renderer
+                    }
+                    renderer.update()
+                }
+
+                static addTask(list_id,input_id){
+                    let current_list = Actions.lists[list_id].list
+                    let current_renderer = Actions.lists[list_id].renderer
+                    let input = document.querySelector(`#${input_id}`)
+                    current_list.add(input.value)
+                    current_renderer.update()
+                }
+
+                static removeTask(list_id,id){
+                    let current_renderer = Actions.lists[list_id].renderer
+                    let current_list = Actions.lists[list_id].list
+                    current_list.remove(id)
+                    current_renderer.update()
+                }
+
+                static markDone(list_id,id){
+                    let current_renderer = Actions.lists[list_id].renderer
+                    let current_list = Actions.lists[list_id].list
+                    current_list.done(id)
+                    current_renderer.update()
+                }
+            }
+
+            Actions.initList('list_root')
+            Actions.initList('list_root2')
+        </script>
     </body>
 </html>
